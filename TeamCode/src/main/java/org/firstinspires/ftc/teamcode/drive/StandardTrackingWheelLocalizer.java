@@ -6,6 +6,7 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.localization.ThreeTrackingWheelLocalizer;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import org.firstinspires.ftc.teamcode.util.Encoder;
 
@@ -46,11 +47,15 @@ public class StandardTrackingWheelLocalizer extends ThreeTrackingWheelLocalizer 
                 new Pose2d(FORWARD_OFFSET, 0, Math.toRadians(90)) // front
         ));
 
-        leftEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "input"));
-        rightEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "wobbleArm"));
-        frontEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "output"));
+        leftEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "input2"));
+        rightEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "output"));
+        frontEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "wobbleArm"));
 
         // TODO: reverse any encoders using Encoder.setDirection(Encoder.Direction.REVERSE)
+        rightEncoder.setDirection(Encoder.Direction.REVERSE);
+
+
+
     }
 
     public static double encoderTicksToInches(double ticks) {
