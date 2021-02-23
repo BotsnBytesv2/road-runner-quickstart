@@ -173,7 +173,7 @@ public class AllDirection extends LinearOpMode {
             }
 
 
-            if (beforeLeftBPressed && beforeLeftBPressed != gamepad1.left_bumper) {
+            /*if (beforeLeftBPressed && beforeLeftBPressed != gamepad1.left_bumper) {
                 if(robotBackwards) {
                     reverse = 1.0;
                 } else {
@@ -181,12 +181,12 @@ public class AllDirection extends LinearOpMode {
                 }
                 robotBackwards = !robotBackwards;
             }
-            beforeLeftBPressed = gamepad1.left_bumper;
+            beforeLeftBPressed = gamepad1.left_bumper;*/
 
             if (beforeAPressed && beforeAPressed != gamepad1.a) {
                 if(inputRunning) {
-                    input.setPower(0.7);
-                    input2.setPower(1.0);
+                    input.setPower(-1.0);
+                    input2.setPower(-1.0);
                 } else {
                     input.setPower(0.0);
                     input2.setPower(0.0);
@@ -212,10 +212,10 @@ public class AllDirection extends LinearOpMode {
                 wobbleArm.setPower(1.0);
             }
             else if(gamepad1.dpad_down){
-                wobbleArm.setPower(-0.6);
+                wobbleArm.setPower(-1.0);
             }
             else{
-                wobbleArm.setPower(0.2);
+                wobbleArm.setPower(0.0);
             }
 
             if (beforeRightBPressed && beforeRightBPressed != gamepad1.right_bumper) {
