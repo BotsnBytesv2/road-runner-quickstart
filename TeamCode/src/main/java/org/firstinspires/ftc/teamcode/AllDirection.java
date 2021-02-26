@@ -28,8 +28,10 @@ Copyright (c) 2017 FIRST. All rights reserved.
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.teamcode.drive;
+package org.firstinspires.ftc.teamcode;
 
+import com.acmerobotics.roadrunner.geometry.Vector2d;
+import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import com.qualcomm.robotcore.hardware.CRServoImplEx;
@@ -42,6 +44,13 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.robotcore.external.android.AndroidTextToSpeech;
+
+import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.roadrunner.geometry.Pose2d;
+
+
+import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
+import org.firstinspires.ftc.teamcode.drive.StandardTrackingWheelLocalizer;
 /**
  * This file contains an minimal example of a Linear "OpMode". An OpMode is a 'program' that runs in either
  * the autonomous or the teleop period of an FTC match. The names of OpModes appear on the menu
@@ -81,11 +90,8 @@ public class AllDirection extends LinearOpMode {
         telemetry.update();
 
 
-
-        frontleftmotor = hardwareMap.get(DcMotor.class, "frontleftmotor");
-        frontrightmotor = hardwareMap.get(DcMotor.class, "frontrightmotor");
-        backrightmotor = hardwareMap.get(DcMotor.class, "backrightmotor");
-        backleftmotor = hardwareMap.get(DcMotor.class, "backleftmotor");
+        StandardTrackingWheelLocalizer myLocalizer = new StandardTrackingWheelLocalizer(hardwareMap);
+        SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
         input = hardwareMap.get(DcMotor.class, "input");
         output = hardwareMap.get(DcMotor.class, "output");
         wobbleArm = hardwareMap.get(DcMotor.class, "wobbleArm");
@@ -116,8 +122,7 @@ public class AllDirection extends LinearOpMode {
         backrightmotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backleftmotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-
-
+        myLocalizer.setPoseEstimate(PoseStorage.currentPose);
 
 
 
@@ -136,15 +141,15 @@ public class AllDirection extends LinearOpMode {
         boolean clawGrabbing = false;
         double reverse = 1.0;
         boolean beforeLeftBPressed = false;
-        boolean robotBackwards = false;
+        boolean autoMove = false;
 
 
 
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
-            
-
+            myLocalizer.update();
+            Pose2d myPose = myLocalizer.getPoseEstimate();
             //This moves the base
             double r = Math.hypot(gamepad1.left_stick_x, gamepad1.left_stick_y);
             double robotAngle = Math.atan2(gamepad1.left_stick_y, gamepad1.left_stick_x) - Math.PI / 4;
@@ -153,6 +158,12 @@ public class AllDirection extends LinearOpMode {
             final double v2 = r * Math.cos(robotAngle) + rightX;
             final double v3 = -r * Math.cos(robotAngle) + rightX;
             final double v4 = r * Math.sin(robotAngle) + rightX;
+
+
+            Trajectory goToShoot = drive.trajectoryBuilder(myPose)
+                    .splineTo(new Vector2d(-10, 35), 0)
+                    .build();
+
 
 
             if(gamepad1.x){
@@ -173,15 +184,15 @@ public class AllDirection extends LinearOpMode {
             }
 
 
-            /*if (beforeLeftBPressed && beforeLeftBPressed != gamepad1.left_bumper) {
-                if(robotBackwards) {
-                    reverse = 1.0;
+            if (beforeLeftBPressed && beforeLeftBPressed != gamepad1.left_bumper) {
+                if(autoMove) {
+                    drive.followTrajectory(goToShoot);
                 } else {
-                    reverse = -1.0;
+                    drive.followTrajectory(goToShoot);
                 }
-                robotBackwards = !robotBackwards;
+                autoMove = !autoMove;
             }
-            beforeLeftBPressed = gamepad1.left_bumper;*/
+            beforeLeftBPressed = gamepad1.left_bumper;
 
             if (beforeAPressed && beforeAPressed != gamepad1.a) {
                 if(inputRunning) {
@@ -261,6 +272,7 @@ public class AllDirection extends LinearOpMode {
             telemetry.addData("Mode", (changeMove%2));
             //telemetry.addData("Motors", "one (%.2f), two (%.2f), servoone (%.2f), servotwo (%.2f)", onePower, twoPower, servo1pos, servo2pos);
             telemetry.update();
+
         }
     }
 }
