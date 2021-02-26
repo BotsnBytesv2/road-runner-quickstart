@@ -27,7 +27,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.robotcontroller.external.samples;
+package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
@@ -39,6 +39,16 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection;
 import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
+import com.acmerobotics.roadrunner.geometry.Pose2d;
+import com.acmerobotics.roadrunner.trajectory.Trajectory;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.acmerobotics.roadrunner.geometry.Vector2d;
+
+import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 
 /**
  * This 2020-2021 OpMode illustrates the basics of using the TensorFlow Object Detection API to
@@ -56,6 +66,13 @@ public class ConceptTensorFlowObjectDetection extends LinearOpMode {
     private static final String TFOD_MODEL_ASSET = "UltimateGoal.tflite";
     private static final String LABEL_FIRST_ELEMENT = "Quad";
     private static final String LABEL_SECOND_ELEMENT = "Single";
+
+    private DcMotor input = null;
+    private DcMotor output = null;
+    private DcMotor wobbleArm = null;
+    private Servo topClaw = null;
+    private Servo bottomClaw = null;
+    private Servo transfer = null;
 
     /*
      * IMPORTANT: You need to obtain your own license key to use Vuforia. The string below with which
@@ -84,7 +101,15 @@ public class ConceptTensorFlowObjectDetection extends LinearOpMode {
     private TFObjectDetector tfod;
 
     @Override
+
     public void runOpMode() {
+        input = hardwareMap.get(DcMotor.class, "input");
+        output = hardwareMap.get(DcMotor.class, "output");
+        wobbleArm = hardwareMap.get(DcMotor.class, "wobbleArm");
+        transfer = hardwareMap.get(Servo.class, "transferServo");
+        topClaw = hardwareMap.get(Servo.class, "topClaw");
+        bottomClaw = hardwareMap.get(Servo.class, "bottomClaw");
+
         // The TFObjectDetector uses the camera frames from the VuforiaLocalizer, so we create that
         // first.
         initVuforia();
@@ -112,27 +137,171 @@ public class ConceptTensorFlowObjectDetection extends LinearOpMode {
         telemetry.addData(">", "Press Play to start op mode");
         telemetry.update();
         waitForStart();
+        wobbleArm.setPower(-1.0);
+        SampleMecanumDrive drivetrain = new SampleMecanumDrive(hardwareMap);
+        Pose2d startPose = new Pose2d(-60, 48, 0);
+        drivetrain.setPoseEstimate(startPose);
+
+        Trajectory traj1 = drivetrain.trajectoryBuilder(startPose)
+                .splineTo(new Vector2d(-45, 40), 0)
+                .build();
+        drivetrain.followTrajectory(traj1);
+
+        //PAUSE TO SENSE
+        sleep(1500);
 
         if (opModeIsActive()) {
             while (opModeIsActive()) {
+                String blah = "";
                 if (tfod != null) {
                     // getUpdatedRecognitions() will return null if no new information is available since
                     // the last time that call was made.
                     List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
                     if (updatedRecognitions != null) {
-                      telemetry.addData("# Object Detected", updatedRecognitions.size());
+                        telemetry.addData("# Object Detected", updatedRecognitions.size());
 
-                      // step through the list of recognitions and display boundary info.
-                      int i = 0;
-                      for (Recognition recognition : updatedRecognitions) {
-                        telemetry.addData(String.format("label (%d)", i), recognition.getLabel());
-                        telemetry.addData(String.format("  left,top (%d)", i), "%.03f , %.03f",
-                                          recognition.getLeft(), recognition.getTop());
-                        telemetry.addData(String.format("  right,bottom (%d)", i), "%.03f , %.03f",
-                                recognition.getRight(), recognition.getBottom());
-                      }
-                      telemetry.update();
+                        // step through the list of recognitions and display boundary info.
+                        int i = 0;
+                        for (Recognition recognition : updatedRecognitions) {
+                            telemetry.addData(String.format("label (%d)", i), recognition.getLabel());
+                            blah = recognition.getLabel();
+                            telemetry.addData(String.format("  left,top (%d)", i), "%.03f , %.03f",
+                                    recognition.getLeft(), recognition.getTop());
+                            telemetry.addData(String.format("  right,bottom (%d)", i), "%.03f , %.03f",
+                                    recognition.getRight(), recognition.getBottom());
+                        }
+                        telemetry.update();
                     }
+                }
+                telemetry.addData("New label: ", blah);
+                if(blah.equals("Quad")){
+                    Trajectory traj2 = drivetrain.trajectoryBuilder(traj1.end())
+                            .splineTo(new Vector2d(46, 67), 0)
+                            .build();
+                    drivetrain.followTrajectory(traj2);
+                    //drop wobble goal
+                    sleep(1000);
+
+                    Trajectory traj3 = drivetrain.trajectoryBuilder(traj2.end())
+                            .splineTo(new Vector2d(-10, 35), 0)
+                            .build();
+                    drivetrain.followTrajectory(traj3);
+
+                    //PAUSE TO SHOOT
+                    drivetrain.turn(Math.toRadians(200));
+                    sleep(1000);
+                    //shoot rings into goal
+
+                    Trajectory traj4 = drivetrain.trajectoryBuilder(traj3.end())
+                            .splineTo(new Vector2d(-40, 24), 0)
+                            .build();
+                    drivetrain.followTrajectory(traj4);
+                    drivetrain.turn(Math.toRadians(200));
+                    //pick up wobble goal
+                    sleep(1000);
+
+                    Trajectory traj5 = drivetrain.trajectoryBuilder(traj4.end())
+                            .splineTo(new Vector2d(46, 67), 0)
+                            .build();
+                    drivetrain.followTrajectory(traj5);
+
+                    Trajectory traj6 = drivetrain.trajectoryBuilder(traj5.end())
+                            .splineTo(new Vector2d(54, 63), 0)
+                            .build();
+                    drivetrain.followTrajectory(traj6);
+                    //drop wobble goal
+                    sleep(1000);
+
+                    Trajectory traj7 = drivetrain.trajectoryBuilder(traj6.end())
+                            .splineTo(new Vector2d(12, 35), 0)
+                            .build();
+                    drivetrain.followTrajectory(traj7);
+                }
+                else if(blah.equals("Single")){
+                    Trajectory traj2 = drivetrain.trajectoryBuilder(traj1.end())
+                            .splineTo(new Vector2d(30, 35), 0)
+                            .build();
+                    drivetrain.followTrajectory(traj2);
+                    //drop wobble goal
+                    sleep(1000);
+
+                    Trajectory traj3 = drivetrain.trajectoryBuilder(traj2.end())
+                            .splineTo(new Vector2d(-10, 35), 0)
+                            .build();
+                    drivetrain.followTrajectory(traj3);
+
+                    //PAUSE TO SHOOT
+                    drivetrain.turn(Math.toRadians(180));
+                    sleep(1000);
+                    //shoot rings into goal
+
+                    Trajectory traj4 = drivetrain.trajectoryBuilder(traj3.end())
+                            .splineTo(new Vector2d(-48, 24), 0)
+                            .build();
+                    drivetrain.followTrajectory(traj4);
+                    //pick up wobble goal
+                    sleep(1000);
+
+                    Trajectory traj5 = drivetrain.trajectoryBuilder(traj4.end())
+                            .splineTo(new Vector2d(25, 35), 0)
+                            .build();
+                    drivetrain.followTrajectory(traj5);
+
+                    Trajectory traj6 = drivetrain.trajectoryBuilder(traj5.end())
+                            .splineTo(new Vector2d(30, 35), 0)
+                            .build();
+                    drivetrain.followTrajectory(traj6);
+
+                    //drop wobble goal
+                    sleep(1000);
+
+                    Trajectory traj7 = drivetrain.trajectoryBuilder(traj6.end())
+                            .splineTo(new Vector2d(12, 35), 0)
+                            .build();
+                    drivetrain.followTrajectory(traj7);
+                }
+                else{
+                    Trajectory traj2 = drivetrain.trajectoryBuilder(traj1.end())
+                            .splineTo(new Vector2d(4, 63), 0)
+                            .build();
+                    drivetrain.followTrajectory(traj2);
+                    //drop wobble goal
+                    sleep(1000);
+                    wobbleArm.setPower(0.0);
+
+                    Trajectory traj3 = drivetrain.trajectoryBuilder(traj2.end())
+                            .splineTo(new Vector2d(-10, 35), 0)
+                            .build();
+                    drivetrain.followTrajectory(traj3);
+
+                    //PAUSE TO SHOOT
+                    drivetrain.turn(Math.toRadians(200));
+                    sleep(1000);
+                    //shoot rings into goal
+
+                    Trajectory traj4 = drivetrain.trajectoryBuilder(traj3.end())
+                            .splineTo(new Vector2d(-38, 24), 0)
+                            .build();
+                    drivetrain.followTrajectory(traj4);
+                    //pick up wobble goal
+                    sleep(1000);
+
+                    Trajectory traj5 = drivetrain.trajectoryBuilder(traj4.end())
+                            .splineTo(new Vector2d(0, 63), 0)
+                            .build();
+                    drivetrain.followTrajectory(traj5);
+
+                    Trajectory traj6 = drivetrain.trajectoryBuilder(traj5.end())
+                            .splineTo(new Vector2d(4, 63), 0)
+                            .build();
+                    drivetrain.followTrajectory(traj6);
+                    //drop wobble goal
+                    sleep(1000);
+
+                    Trajectory traj7 = drivetrain.trajectoryBuilder(traj6.end())
+                            .splineTo(new Vector2d(12, 35), 0)
+                            .build();
+                    drivetrain.followTrajectory(traj7);
                 }
             }
         }
@@ -165,9 +334,9 @@ public class ConceptTensorFlowObjectDetection extends LinearOpMode {
      */
     private void initTfod() {
         int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
-            "tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+                "tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
-        tfodParameters.minResultConfidence = 0.8f;
+        tfodParameters.minResultConfidence = 0.5f;
         tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
         tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_FIRST_ELEMENT, LABEL_SECOND_ELEMENT);
     }
