@@ -90,8 +90,12 @@ public class AllDirection extends LinearOpMode {
         telemetry.update();
 
 
-        StandardTrackingWheelLocalizer myLocalizer = new StandardTrackingWheelLocalizer(hardwareMap);
-        SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
+        /*StandardTrackingWheelLocalizer myLocalizer = new StandardTrackingWheelLocalizer(hardwareMap);*/
+        //SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
+        frontleftmotor = hardwareMap.get(DcMotor.class, "frontleftmotor");
+        backleftmotor = hardwareMap.get(DcMotor.class, "backleftmotor");
+        frontrightmotor = hardwareMap.get(DcMotor.class, "frontrightmotor");
+        backrightmotor = hardwareMap.get(DcMotor.class, "backrightmotor");
         input = hardwareMap.get(DcMotor.class, "input");
         output = hardwareMap.get(DcMotor.class, "output");
         wobbleArm = hardwareMap.get(DcMotor.class, "wobbleArm");
@@ -122,7 +126,7 @@ public class AllDirection extends LinearOpMode {
         backrightmotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backleftmotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        myLocalizer.setPoseEstimate(PoseStorage.currentPose);
+        /*myLocalizer.setPoseEstimate(PoseStorage.currentPose);*/
 
 
 
@@ -148,8 +152,8 @@ public class AllDirection extends LinearOpMode {
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
-            myLocalizer.update();
-            Pose2d myPose = myLocalizer.getPoseEstimate();
+            /*myLocalizer.update();
+            Pose2d myPose = myLocalizer.getPoseEstimate();*/
             //This moves the base
             double r = Math.hypot(gamepad1.left_stick_x, gamepad1.left_stick_y);
             double robotAngle = Math.atan2(gamepad1.left_stick_y, gamepad1.left_stick_x) - Math.PI / 4;
@@ -160,9 +164,9 @@ public class AllDirection extends LinearOpMode {
             final double v4 = r * Math.sin(robotAngle) + rightX;
 
 
-            Trajectory goToShoot = drive.trajectoryBuilder(myPose)
+            /*Trajectory goToShoot = drive.trajectoryBuilder(myPose)
                     .splineTo(new Vector2d(-10, 35), 0)
-                    .build();
+                    .build();*/
 
 
 
@@ -184,7 +188,7 @@ public class AllDirection extends LinearOpMode {
             }
 
 
-            if (beforeLeftBPressed && beforeLeftBPressed != gamepad1.left_bumper) {
+            /*if (beforeLeftBPressed && beforeLeftBPressed != gamepad1.left_bumper) {
                 if(autoMove) {
                     drive.followTrajectory(goToShoot);
                 } else {
@@ -192,7 +196,8 @@ public class AllDirection extends LinearOpMode {
                 }
                 autoMove = !autoMove;
             }
-            beforeLeftBPressed = gamepad1.left_bumper;
+            beforeLeftBPressed = gamepad1.left_bumper;*/
+
 
             if (beforeAPressed && beforeAPressed != gamepad1.a) {
                 if(inputRunning) {
@@ -271,6 +276,9 @@ public class AllDirection extends LinearOpMode {
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.addData("Mode", (changeMove%2));
             //telemetry.addData("Motors", "one (%.2f), two (%.2f), servoone (%.2f), servotwo (%.2f)", onePower, twoPower, servo1pos, servo2pos);
+            /*telemetry.addData("x", poseEstimate.getX());
+            telemetry.addData("y", poseEstimate.getY());
+            telemetry.addData("heading", poseEstimate.getHeading());*/
             telemetry.update();
 
         }
