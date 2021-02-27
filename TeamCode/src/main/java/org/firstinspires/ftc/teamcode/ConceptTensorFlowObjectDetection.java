@@ -520,7 +520,7 @@ public class ConceptTensorFlowObjectDetection extends LinearOpMode {
                     sleep(5000);
                 }
             }
-            PoseStorage.currentPose = drivetrain.getPoseEstimate();
+            //PoseStorage.currentPose = drivetrain.getPoseEstimate();
         }
 
         if (tfod != null) {
